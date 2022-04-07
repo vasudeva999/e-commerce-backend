@@ -1,6 +1,5 @@
 from sqlalchemy.exc import IntegrityError
 import graphene
-from graphene_sqlalchemy import SQLAlchemyConnectionField
 from flask_graphql_auth import get_jwt_identity, query_header_jwt_required, mutation_header_jwt_required
 from .serializer import ProductType
 from .models import Product
@@ -8,16 +7,16 @@ from config.database import db_session
 
 
 class Query(graphene.ObjectType):
-    products = graphene.List(ProductType) # SQLAlchemyConnectionField(ProductType.connection)
+    products = graphene.List(ProductType)
     product = graphene.List(ProductType, pk=graphene.Int())
 
     @classmethod
-    # @query_header_jwt_required
+    @query_header_jwt_required
     def resolve_products(cls, _, info):
         return Product.query.all()
 
     @classmethod
-    # @query_header_jwt_required
+    @query_header_jwt_required
     def resolve_product(cls, _, info, pk):
         return Product.query.filter_by(id=pk)
 
