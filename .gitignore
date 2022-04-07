@@ -1,1 +1,8 @@
 # created by virtualenv automatically
+/app/server/migrations
+/app/server/alembic.ini
+/app/server/database.sqlite
+/bin
+/include
+/lib
+pyvenv.cfg

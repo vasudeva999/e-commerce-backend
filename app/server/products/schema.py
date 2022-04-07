@@ -8,8 +8,8 @@ from config.database import db_session
 
 
 class Query(graphene.ObjectType):
-    products = SQLAlchemyConnectionField(ProductType.connection)
-    product = graphene.Field(ProductType, pk=graphene.Int())
+    products = graphene.List(ProductType) # SQLAlchemyConnectionField(ProductType.connection)
+    product = graphene.List(ProductType, pk=graphene.Int())
 
     @classmethod
     # @query_header_jwt_required
@@ -34,7 +34,7 @@ class CreateProductInput(graphene.InputObjectType, ProductAttribute):
 class CreateProduct(graphene.Mutation):
     product = graphene.Field(ProductType)
     success = graphene.Boolean()
-    error = graphene.String()
+    error = graphene.String(default_value="Not Authorised")
 
     class Arguments:
         input = CreateProductInput(required=True)
@@ -47,7 +47,7 @@ class CreateProduct(graphene.Mutation):
             product = Product(**input)
             db_session.add(product)
             db_session.commit()
-            return CreateProduct(success=True)
+            return CreateProduct(product=product, success=True, error=None)
         except IntegrityError as e:
             return CreateProduct(error=f"{e.orig}", success=False)
 
