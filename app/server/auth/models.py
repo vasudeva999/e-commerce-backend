@@ -1,4 +1,3 @@
-from enum import unique
 from sqlalchemy import *
 from config.database import Base
 
