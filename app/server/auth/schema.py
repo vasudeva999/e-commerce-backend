@@ -39,10 +39,9 @@ class Register(graphene.Mutation):
 
             db_session.add(new_user)
             db_session.commit()
+            return Register(success = True, message="user created")
         except IntegrityError as e:
             return Register(error=f"{e.orig}")
-            
-        return Register(success = True, message="user created")
 
 class AuthMutation(graphene.Mutation):
     class Arguments:
@@ -80,6 +79,57 @@ class RefreshMutation(graphene.Mutation):
         current_user = get_jwt_identity()
         return RefreshMutation(new_token=create_refresh_token(identity=current_user))
 
+class UpdateUser(graphene.Mutation):
+    class Arguments:
+        username = graphene.String()
+        email = graphene.String()
+        password1 = graphene.String()
+        password2 = graphene.String()
+        first_name = graphene.String()
+        last_name = graphene.String()
+
+    success = graphene.Boolean()
+    message = graphene.String()
+    error = graphene.String()
+    
+    @classmethod
+    @mutation_header_jwt_required
+    def mutate(cls, _, info, username, email, password1, password2, first_name, last_name):
+        userData = {
+            'username': username,
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+            'password1': password1,
+            'password2': password2
+        }
+        if not check_email(email):
+            return UpdateUser(error="Make sure you pass correct email.")
+        
+        if password1 != password2:
+            return UpdateUser(error="Password did not match.")
+        try:
+            isUpdated = False
+            user_id = get_jwt_identity()
+            user = User.query.filter_by(id=user_id).first()
+            for property in userData.keys():
+                print("----> ", property)
+                if (property in ['password1', 'password2']):
+                    print("-- property ", property)
+                    password = generate_password_hash(password1, method='sha256')
+                    setattr(user, 'password', password)
+                elif (getattr(user, property) == userData[property]):
+                    continue
+                else:
+                    setattr(user, property, userData[property])
+                isUpdated = True
+            db_session.commit()
+            if (isUpdated):
+                return UpdateUser(success=True, message=f"User has been updated.")
+            return UpdateUser(success=True, message=f"Nothing to update user data.")
+        except IntegrityError as e:
+            return UpdateUser(error=f"{e.orig}")
+
 class DeleteUser(graphene.Mutation):
     success = graphene.Boolean()
     message = graphene.String()
@@ -102,6 +152,7 @@ class Mutation(graphene.ObjectType):
     register = Register.Field()
     auth = AuthMutation.Field()
     refresh = RefreshMutation.Field()
+    update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
 
 class Query(graphene.ObjectType):

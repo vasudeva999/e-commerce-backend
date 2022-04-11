@@ -78,7 +78,7 @@ class UpdateProduct(graphene.Mutation):
             db_session.commit()
             if (isUpdated):
                 return UpdateProduct(success=True, message=f"Product has been updated.")
-            return UpdateProduct(success=True, message=f"Nothing to update this product..")
+            return UpdateProduct(success=True, message=f"Nothing to update product details.")
             
         except IntegrityError as e:
             return UpdateProduct(error=f"{e.orig}", success=False)
