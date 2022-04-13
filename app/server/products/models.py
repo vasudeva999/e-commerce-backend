@@ -2,14 +2,7 @@ from sqlalchemy import *
 from config.database import Base
 from auth.models import User
 from sqlalchemy.orm import relationship, backref
-
-class Category(Base):
-    __tablename__ = "category"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(200))
-
-    def __str__(self) -> str:
-        return f"{self.name}"
+from category.models import Category
 
 class Product(Base):
     __tablename__ = "product"

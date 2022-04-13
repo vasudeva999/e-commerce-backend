@@ -5,7 +5,9 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-uri = "sqlite:///" + os.path.join(BASE_DIR, "../database.sqlite")
+# uri = "sqlite:///" + os.path.join(BASE_DIR, "../database.sqlite")
+
+uri = 'postgresql+psycopg2://postgres:123456@localhost:1234/vasudev'
 
 engine = create_engine(uri, echo=True, convert_unicode=True)
 

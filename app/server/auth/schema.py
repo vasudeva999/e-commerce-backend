@@ -1,11 +1,10 @@
-from email import message
 from sqlalchemy.exc import IntegrityError
 import graphene
 from config.helpers import check_email
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from config.database import db_session
-from flask_graphql_auth import create_access_token, create_refresh_token, mutation_jwt_refresh_token_required, get_jwt_identity, query_header_jwt_required, mutation_header_jwt_required
+from flask_graphql_auth import create_access_token, create_refresh_token, mutation_header_jwt_refresh_token_required, get_jwt_identity, query_header_jwt_required, mutation_header_jwt_required
 from .serializer import UserType
 
 class Register(graphene.Mutation):
@@ -39,7 +38,7 @@ class Register(graphene.Mutation):
 
             db_session.add(new_user)
             db_session.commit()
-            return Register(success = True, message="user created")
+            return Register(success = True, message="User created")
         except IntegrityError as e:
             return Register(error=f"{e.orig}")
 
@@ -68,16 +67,20 @@ class AuthMutation(graphene.Mutation):
         )
 
 class RefreshMutation(graphene.Mutation):
-    class Arguments(object):
-        refresh_token = graphene.String()
-
-    new_token = graphene.String()
+    access_token = graphene.String()
+    refresh_token = graphene.String()
+    error = graphene.String()
 
     @classmethod
-    @mutation_jwt_refresh_token_required
-    def mutate(cls, _, info):
-        current_user = get_jwt_identity()
-        return RefreshMutation(new_token=create_refresh_token(identity=current_user))
+    @mutation_header_jwt_refresh_token_required
+    def mutate(cls, info):
+        try:
+            current_user = get_jwt_identity()
+            access_token = create_access_token(identity=current_user)
+            refresh_token = create_refresh_token(identity=current_user)
+            return RefreshMutation(access_token=access_token, refresh_token=refresh_token)
+        except IntegrityError as e:
+            return RefreshMutation(error=f"{e.orig}")
 
 class UpdateUser(graphene.Mutation):
     class Arguments:
@@ -113,9 +116,7 @@ class UpdateUser(graphene.Mutation):
             user_id = get_jwt_identity()
             user = User.query.filter_by(id=user_id).first()
             for property in userData.keys():
-                print("----> ", property)
                 if (property in ['password1', 'password2']):
-                    print("-- property ", property)
                     password = generate_password_hash(password1, method='sha256')
                     setattr(user, 'password', password)
                 elif (getattr(user, property) == userData[property]):
